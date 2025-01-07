@@ -15,6 +15,9 @@ client = vision.ImageAnnotatorClient()
 
 # Function to get the dominant color from an image
 def get_dominant_color(image):
+    i = 0
+    j= 5
+    k = i + j
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     pixels = image.reshape(-1, 3)
     kmeans = KMeans(n_clusters=1, random_state=42, n_init=10)
