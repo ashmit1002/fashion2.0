@@ -1,17 +1,27 @@
 import os
 import io
 import requests
+import boto3
 from google.cloud import vision
 import cv2
 import numpy as np
+from flask import Flask, request, jsonify, send_from_directory
+from botocore.exceptions import NoCredentialsError
+from serpapi import GoogleSearch
 from sklearn.cluster import KMeans
-from flask import Flask, request, jsonify, send_file, render_template
+import base64
 
 # Initialize Flask app
 app = Flask(__name__)
 
 # Initialize Google Vision client
 client = vision.ImageAnnotatorClient()
+
+# Initialize AWS S3 client
+s3_client = boto3.client('s3')
+
+# Set your S3 bucket name
+S3_BUCKET_NAME = 'fashionwebapp'
 
 # Function to get the dominant color from an image
 def get_dominant_color(image):
@@ -33,34 +43,82 @@ def get_color_name(rgb):
         return color_name
     return None
 
-# Route for home page to check if server is running
-@app.route('/')
-def home():
-    return render_template('upload.html')  # Serve the HTML form
+# Function to upload an image to AWS S3
+def upload_to_s3(image, filename):
+    try:
+        # Convert image to bytes
+        _, img_bytes = cv2.imencode('.jpg', image)
+        img_bytes = img_bytes.tobytes()
 
-# Route to handle image upload and analysis
+        # Upload image to S3
+        s3_client.put_object(
+            Bucket=S3_BUCKET_NAME,
+            Key=filename,
+            Body=img_bytes,
+            ContentType='image/jpeg'
+        )
+
+        # Generate S3 URL
+        s3_url = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{filename}"
+        return s3_url
+
+    except NoCredentialsError:
+        return None
+
+# Function to get clothing items from Google Image Search
+def get_clothing_from_google_search(image_url):
+    params = {
+        "engine": "google_lens",
+        "url": image_url,
+        "api_key": "ef1060959fb01ad0a7d0000ed737a785872acf6d6b17b12ee71ef7b575e88999"
+    }
+
+    try:
+        search = GoogleSearch(params)
+        results = search.get_dict()
+
+        visual_matches = results.get("visual_matches", [])
+        top_matches = visual_matches[:3]
+
+        response = []
+        for match in top_matches:
+            response.append({
+                "title": match.get("title"),
+                "link": match.get("link"),
+                "price": str(match.get("price", {}).get("currency", "")) + " " + str(match.get("price", {}).get("extracted_value", "N/A")),
+                "thumbnail": match.get("thumbnail")
+            })
+
+        return response
+
+    except Exception as e:
+        return {"error": str(e)}
+
+# Default route to serve the frontend
+@app.route('/')
+def index():
+    return send_from_directory('static', 'index.html')
+
 # Route to handle image upload and analysis
 @app.route('/upload', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
         return jsonify({'error': 'No image file provided'}), 400
     
-    # Get the image file from the request
     image_file = request.files['image']
-    
-    # Ensure the image has a filename before saving
-    if not image_file.filename:
-        return jsonify({'error': 'No filename found in the uploaded file'}), 400
-    
+    image_filename = image_file.filename  # Get the filename from the file object
+    image_path = os.path.join('uploads', image_filename)
+
     # Save the uploaded image
-    image_path = os.path.join('uploads', image_file.filename)
     image_file.save(image_path)
 
     # Analyze the image (bounding boxes, dominant colors, etc.)
     try:
         img = cv2.imread(image_path)
-        with io.open(image_path, 'rb') as f:
-            content = f.read()
+        
+        # Open the saved image for Google Vision API
+        with io.open(image_path, 'rb') as img_file:
+            content = img_file.read()
         image = vision.Image(content=content)
 
         # Perform object detection
@@ -68,7 +126,7 @@ def upload_image():
         objects = response.localized_object_annotations
 
         components = []
-        annotated_image_path = 'static/annotated_' + image_file.filename
+        annotated_image_path = os.path.join('static', 'annotated_' + image_filename)
 
         # Create a copy of the original image for annotating
         annotated_image = img.copy()
@@ -93,27 +151,42 @@ def upload_image():
             cv2.putText(annotated_image, f"{label} - {color_name}", (vertices[0][0], vertices[0][1] - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, dominant_color_bgr, 2)
 
-            # Store component data
-            components.append({
-                'name': label,
-                'dominant_color': color_name,
-                'image_url': f'/static/{image_file.filename}'  # Display the original image thumbnail
-            })
+            # Save the bounding box as a separate image
+            cropped_image = img[y_min:y_max, x_min:x_max]
+            filename = f"{label}_{x_min}_{y_min}.jpg"
+            image_url = upload_to_s3(cropped_image, filename)
 
-        # Save the annotated image
-        cv2.imwrite(annotated_image_path, annotated_image)
+            if image_url:
+                # Get clothing item details from Google Search
+                clothing_items = get_clothing_from_google_search(image_url)
+
+                # Append component data
+                components.append({
+                    'name': label,
+                    'dominant_color': color_name,
+                    'image_url': image_url,
+                    'clothing_items': clothing_items
+                })
+
+        # Convert annotated image to base64 for frontend display
+        _, buffer = cv2.imencode('.jpg', annotated_image)
+        annotated_image_base64 = base64.b64encode(buffer).decode('utf-8')
 
         return jsonify({
             'components': components,
-            'annotated_image_url': f'/static/annotated_{image_file.filename}'
+            'annotated_image_base64': annotated_image_base64
         })
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 if __name__ == '__main__':
+    # Ensure required directories exist
     if not os.path.exists('uploads'):
         os.makedirs('uploads')
     if not os.path.exists('static'):
         os.makedirs('static')
+
+    # Run the Flask app
     app.run(debug=True)
