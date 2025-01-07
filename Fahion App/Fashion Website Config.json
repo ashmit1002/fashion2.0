@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "fashion-website-446822",
+  "private_key_id": "c017f8ad8f7d558f9892ec8ce3569554c73339a4",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCUrFRJlcXR5Fef\nCYlESVtqh3aPIu5hWmUDbT39f8kWoFvlg6rb1XELGuCnZq1iY2XY92hGgGvsn+nP\nlDeWkXONgeeUa0wVJQML58p/XPWlAhYREnBd/Cm9XzV35iL+IwPshGA2VVbZCgFr\nR7TUQGe3SkPn1TtMJZZOU/Uo9Lp0N+X10hg88ds+X15CiYZCYQ12+BOBTPKSvZr6\nBOnqsvMJSrAij1zxg6YKhnH1ZUugkWgHIlIDTRhrNsB/ey5/bzAmzPLgugs0KdG1\nDIa+qDDBjrxSQtwGIdQj7qXq9pwatofZRpBCld067oY7ySiE7ejGNm8QtjizsHpd\nuFXZ29lxAgMBAAECggEALWcLPoWcqeKf15Oj9dSpNDk2PbQfNF/UpV1BJx9VG7HR\nHqA9F3FxWkDVBopWvMs6GS5FC/LAAr07PAc5iqPUtAxN2oeB7psk+QfKUWbkJYYj\nkwcchbcyUAC5ZWpEmXO8CQjMEQuywAlMMaTuVjts8Q6e+jemKjT4V+dP4TgLkN3i\nA6QOYjlEYg47IOFimbtdgDdllEWrWw9Mkqnqb5P8moOozx5TDRVEA+XyXJK99URl\n2un9Ct17ZDPK4kGW2Hk/s+N/QLShOmJD/Wf4lZUsGDf7Bs5sBQm/IqzKdKH/1PFI\n8C02MCPSnIGNmw3V9+vcfpD16fmwfpTUk2onKflV2QKBgQDJ/wSVI5j1yPzSbBDM\nrOEa8+LNa5UVXaTFRdn7E0h5i4wD/1NIdgi8et33YU45HgY5AJNIX54u4llLpCKl\nMJIUI2TyNZm6pAPgwYczZYXqfkKw4vgYR+JIRqUDbkUBJ6bw+2bikxazbwYreI60\nyOfjuTKwpwLOTdiITn2+J32pmwKBgQC8a8nuKA+5SXPgMXxw5BaiuhK32kZpipwM\nzt6BVLy3+1l6cn/En2Sxa05zvcznLHshHiW+CIv2vTDdo/ReTcMxSHZqk2M2dNVA\nIcyffHdDJk/Dg26lTrAN3gE/nqKozYsTWyW3skj4hW1HFQwIeMvDlK71ZwURUUi/\nbeypgBEv4wKBgAY+lfuuUAo5Hme644IQTh0xMO+8xa0VagSXNjfmzrTDNZ7iA8cX\nrwl0muwM3Agz/2k/tU3ldtRoNu55soB80edBeNtsAMaeT2hhUzapisxG/vTM73KA\ntmQZmvxSKlvwx95nRzT16xu88OnjHjZEh7aogQKpBxMtoOYF1ylLuzzFAoGABY07\nfuvpQrFaW7G5k+30iMjowkgJKRTvciUqQy9G/DjIsyXqg9WaduvNfPWLswgJfLlR\nrV69GQEMDovFKH4sESisbIl5M+KPYftc9xoIvY7EbONTgEVoRJBVAxXefxDHV0Op\nQddb9Q6hYKXLG/jLMDESUqK9cHwvo4xOm9PtLbcCgYBAjbVY5OAfNhLILDiaqfvY\n+4zC4Hd0j+giC3bMMa/nSqOOY3AiNB2H03uDWwBvAcKzL5jRPzJpD6kalu78ypdg\n96vQjXW9fD2CvBOKcz/oj/eUfUaGvjFSg8IqHRF7YJOy5wzOiuIf//yq79WG3Q1m\nYFhqWHTlrKbHp6lCgiyOqg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "ashmits@fashion-website-446822.iam.gserviceaccount.com",
+  "client_id": "112881486037453055139",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/ashmits%40fashion-website-446822.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

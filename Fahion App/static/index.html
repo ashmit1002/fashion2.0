@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fashion Web App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    h1 {
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .upload-form {
+      margin-bottom: 20px;
+    }
+    input[type="file"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .results {
+      margin-top: 20px;
+      text-align: left;
+    }
+    .clothing-item {
+      margin-bottom: 10px;
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+    .clothing-item img {
+      max-width: 100px;
+      margin-right: 15px;
+    }
+    .clothing-item .details {
+      display: inline-block;
+      vertical-align: top;
+      width: 70%;
+    }
+    .clothing-item .details h4 {
+      margin: 0;
+    }
+    .clothing-item .details p {
+      margin: 5px 0;
+    }
+    .annotated-image {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Upload an Outfit Image</h1>
+    
+    <!-- Upload Form -->
+    <div class="upload-form">
+      <input type="file" id="imageUpload" accept="image/*">
+      <button onclick="uploadImage()">Upload Image</button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" class="results"></div>
+
+    <!-- Annotated Image -->
+    <div id="annotatedImage" class="annotated-image"></div>
+  </div>
+
+  <script>
+    function uploadImage() {
+      const fileInput = document.getElementById('imageUpload');
+      const formData = new FormData();
+      formData.append('image', fileInput.files[0]);
+
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert("Error: " + data.error);
+        } else {
+          displayResults(data);
+        }
+      })
+      .catch(error => {
+        alert("Error uploading image: " + error);
+      });
+    }
+
+    function displayResults(data) {
+      const resultsContainer = document.getElementById('results');
+      const annotatedImageContainer = document.getElementById('annotatedImage');
+
+      // Clear previous results
+      resultsContainer.innerHTML = '';
+      annotatedImageContainer.innerHTML = '';
+
+      // Show annotated image
+      const annotatedImageBase64 = data.annotated_image_base64;
+      const imgElement = document.createElement('img');
+      imgElement.src = 'data:image/jpeg;base64,' + annotatedImageBase64;
+      imgElement.alt = 'Annotated Image';
+      annotatedImageContainer.appendChild(imgElement);
+
+      // Display clothing components
+      data.components.forEach(component => {
+        const clothingItemDiv = document.createElement('div');
+        clothingItemDiv.classList.add('clothing-item');
+
+        const thumbnail = component.clothing_items[0]?.thumbnail || '';
+        const imageElement = document.createElement('img');
+        imageElement.src = thumbnail;
+        imageElement.alt = 'Clothing Item';
+
+        const detailsDiv = document.createElement('div');
+        detailsDiv.classList.add('details');
+        
+        const title = document.createElement('h4');
+        title.textContent = component.name;
+        detailsDiv.appendChild(title);
+
+        const color = document.createElement('p');
+        color.textContent = 'Color: ' + component.dominant_color;
+        detailsDiv.appendChild(color);
+
+        if (component.clothing_items[0]) {
+          const price = document.createElement('p');
+          price.textContent = 'Price: ' + component.clothing_items[0].price;
+          detailsDiv.appendChild(price);
+
+          const link = document.createElement('a');
+          link.href = component.clothing_items[0].link;
+          link.target = '_blank';
+          link.textContent = 'Buy Now';
+          detailsDiv.appendChild(link);
+        }
+
+        clothingItemDiv.appendChild(imageElement);
+        clothingItemDiv.appendChild(detailsDiv);
+
+        resultsContainer.appendChild(clothingItemDiv);
+      });
+    }
+  </script>
+</body>
+</html>
