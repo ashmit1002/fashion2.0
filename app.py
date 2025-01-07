@@ -1,11 +1,13 @@
 import io
 import os
 import requests
+import base64
 from flask import Flask, render_template, request, jsonify, send_file
 from google.cloud import vision
 import cv2
 import numpy as np
 from sklearn.cluster import KMeans
+from serpapi import GoogleSearch
 
 # Initialize Flask app and Google Vision client
 app = Flask(__name__)
@@ -30,6 +32,37 @@ def get_color_name(rgb):
         return color_name
     return None
 
+# Function to perform reverse image search using SerpAPI (Google Image Search API)
+def reverse_image_search(cropped_image):
+    # Convert the cropped image to a byte array
+    _, img_encoded = cv2.imencode('.jpg', cropped_image)
+    img_byte_array = img_encoded.tobytes()
+
+    # Convert image to base64
+    img_base64 = base64.b64encode(img_byte_array).decode('utf-8')
+
+    # SerpAPI parameters
+    params = {
+        "q": "image search",
+        "tbm": "isch",  # Image Search
+        "ijn": "0",
+        "api_key": "ef1060959fb01ad0a7d0000ed737a785872acf6d6b17b12ee71ef7b575e88999",  # Your SerpAPI API key
+        "encoded_image": img_base64  # Base64 encoded image
+    }
+
+    search = GoogleSearch(params)
+    results = search.get_dict()
+
+    # Check for results and extract data
+    if 'images_results' in results:
+        image_info = results['images_results'][0]  # Get the first match
+        item_url = image_info.get('original', 'N/A')
+        title = image_info.get('title', 'N/A')
+        price = image_info.get('source', 'N/A')  # You can extract price if available in metadata
+        return item_url, title, price
+
+    return None, None, None
+
 # Function to process image, detect objects, and visualize with bounding boxes
 def detect_objects(image_data):
     image = vision.Image(content=image_data)
@@ -39,7 +72,8 @@ def detect_objects(image_data):
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
     descriptions = []
-    
+    clothing_info = []
+
     # Loop through the detected objects and draw bounding boxes
     for obj in objects:
         box = obj.bounding_poly.normalized_vertices
@@ -59,12 +93,23 @@ def detect_objects(image_data):
 
         # Append the description to the result
         descriptions.append(f"{label} - {color_name}")
-    
+
+        # Perform reverse image search for clothing items
+        item_url, title, price = reverse_image_search(cropped_region)
+        if item_url:
+            clothing_info.append({
+                'label': label,
+                'color': color_name,
+                'item_url': item_url,
+                'title': title,
+                'price': price
+            })
+
     # Save the processed image
     processed_image_path = "/tmp/processed_image.jpg"
     cv2.imwrite(processed_image_path, img)
 
-    return processed_image_path, descriptions
+    return processed_image_path, descriptions, clothing_info
 
 @app.route('/')
 def index():
@@ -80,10 +125,14 @@ def upload_image():
         return jsonify({'error': 'No selected file'}), 400
 
     image_data = file.read()
-    processed_image_path, descriptions = detect_objects(image_data)
+    processed_image_path, descriptions, clothing_info = detect_objects(image_data)
 
     # Send the processed image and descriptions to frontend
-    return jsonify({'image_path': processed_image_path, 'descriptions': descriptions})
+    return jsonify({
+        'image_path': processed_image_path,
+        'descriptions': descriptions,
+        'clothing_info': clothing_info
+    })
 
 @app.route('/processed_image')
 def serve_processed_image():
